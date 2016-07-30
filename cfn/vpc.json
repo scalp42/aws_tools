@@ -1,0 +1,524 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "AWS CloudFormation template to create conditional VPCs and appropriate security groups.",
+
+  "Conditions": {
+    "createDevVpc": { "Fn::Equals" : [{ "Ref": "vpcName" }, "dev"] },
+    "createTrainingVpc": { "Fn::Equals" : [{ "Ref": "vpcName" }, "training"] },
+    "createProductionVpc": { "Fn::Equals" : [{ "Ref": "vpcName" }, "production"] }
+  },
+
+  "Mappings": {
+    "Environments": {
+      "dev": {
+        "inboundHTTP": "216.230.10.201/0",
+        "inboundRDP": "216.230.10.201/0",
+        "inboundSSH": "216.230.10.201/0",
+        "keyName": "dtashner-aws-dev",
+        "natAmiId": "ami-6869aa05",
+        "privateSubnetCidr1": "10.0.0.0/19",
+        "publicSubnetCidr1": "10.0.32.0/20",
+        "s3AccessPolicy": "PublicRead",
+        "s3Bucket": "dtashner-dev",
+        "vpcCidrBlock": "10.0.0.0/16"
+      },
+      "training": {
+        "inboundHTTP": "0.0.0.0/0",
+        "inboundRDP": "216.230.10.201/0",
+        "inboundSSH": "216.230.10.201/0",
+        "keyName": "dtashner-aws-training",
+        "natAmiId": "ami-6869aa05",
+        "privateSubnetCidr1": "10.1.0.0/19",
+        "privateSubnetCidr2": "10.1.64.0/19",
+        "publicSubnetCidr1": "10.1.160.0/20",
+        "publicSubnetCidr2": "10.1.176.0/20",
+        "s3AccessPolicy": "PublicRead",
+        "s3Bucket": "dtashner-training",
+        "vpcCidrBlock": "10.1.0.0/16"
+      },
+      "production": {
+        "inboundHTTP": "0.0.0.0/0",
+        "inboundRDP": "216.230.10.201/0",
+        "inboundSSH": "216.230.10.201/0",
+        "keyName": "dtashner-aws-production",
+        "natAmiId": "ami-6869aa05",
+        "privateSubnetCidr1": "10.10.0.0/19",
+        "privateSubnetCidr2": "10.10.64.0/19",
+        "privateSubnetCidr3": "10.10.128.0/19",
+        "publicSubnetCidr1": "10.10.160.0/20",
+        "publicSubnetCidr2": "10.10.176.0/20",
+        "publicSubnetCidr2": "10.10.192.0/20",
+        "s3AccessPolicy": "AuthenticatedRead",
+        "s3Bucket": "dtashner-prod",
+        "vpcCidrBlock": "10.10.0.0/16"
+      }
+    }
+  },
+
+  "Parameters": {
+    "vpcName": {
+      "AllowedValues": ["dev", "training", "production"],
+      "ConstraintDescription": "Conditional driver, determines VPC security and subnet settings.",
+      "Default": "dev",
+      "Description": "The friendly identifier of the VPC to be created.",
+      "Type": "String"
+    }
+  },
+
+  "Resources": {
+    "attachGateway": {
+       "Properties": {
+         "InternetGatewayId": { "Ref": "internetGateway" },
+         "VpcId": { "Ref": "vpc" }
+       },
+       "Type": "AWS::EC2::VPCGatewayAttachment"
+    },
+
+    "defaultInstanceProfile" : {
+        "Properties" : {
+            "Path" : "/",
+            "Roles" : [ { "Ref" : "s3AccessRole" } ]
+        },
+        "Type" : "AWS::IAM::InstanceProfile"
+    },
+
+    "defaultSecurityGroup" : {
+      "DependsOn" : ["vpc"],
+      "Properties" : {
+        "GroupDescription" : "Default Security Group for custom VPC. This group allows HTTP/HTTPS in from the CIDR address in the inboundHTTP parameter, SSH in from the CIDR address in the inboundSSH parameter, and RDP in from the CIDR address in the inboundRDP parameter.",
+        "SecurityGroupIngress" : [
+          {
+            "CidrIp" : { "Fn::FindInMap" : ["Environments", { "Ref": "vpcName" }, "inboundSSH"] },
+            "FromPort" : "22",
+            "IpProtocol" : "tcp",
+            "ToPort" : "22"
+          },
+          {
+            "CidrIp" : { "Fn::FindInMap" : ["Environments", { "Ref": "vpcName" }, "inboundHTTP"] },
+            "FromPort" : "80",
+            "IpProtocol" : "tcp",
+            "ToPort" : "80"
+          },
+          {
+            "CidrIp" : { "Fn::FindInMap" : ["Environments", { "Ref": "vpcName" }, "inboundHTTP"] },
+            "FromPort" : "443",
+            "IpProtocol" : "tcp",
+            "ToPort" : "443"
+          },
+          {
+            "CidrIp" : { "Fn::FindInMap" : ["Environments", { "Ref": "vpcName" }, "inboundRDP"] },
+            "FromPort" : "3389",
+            "IpProtocol" : "tcp",
+            "ToPort" : "3389"
+          }
+        ],
+        "Tags" : [
+          { "Key" : "Name", "Value" : "Default VPC Security Group." }
+        ],
+        "VpcId" : { "Ref" : "vpc" }
+      },
+      "Type" : "AWS::EC2::SecurityGroup"
+    },
+
+    "inboundHTTPNetworkAclEntry": {
+      "Properties": {
+        "Egress": "false",
+        "CidrBlock": "0.0.0.0/0",
+        "NetworkAclId": { "Ref": "networkAcl" },
+        "PortRange": { "From": "80", "To": "80" },
+        "Protocol": "6",
+        "RuleAction": "allow",
+        "RuleNumber": "100"
+      },
+      "Type": "AWS::EC2::NetworkAclEntry"
+    },
+
+    "inboundResponsePortsNetworkAclEntry": {
+      "Properties": {
+        "CidrBlock": "0.0.0.0/0",
+        "Egress": "false",
+        "NetworkAclId": { "Ref": "networkAcl" },
+        "PortRange": { "From": "1024", "To": "65535" },
+        "Protocol": "6",
+        "RuleAction": "allow",
+        "RuleNumber": "102"
+      },
+      "Type": "AWS::EC2::NetworkAclEntry"
+    },
+
+    "inboundSSHNetworkAclEntry": {
+      "Properties": {
+        "CidrBlock": "0.0.0.0/0",
+        "Egress": "false",
+        "NetworkAclId": { "Ref": "networkAcl" },
+        "PortRange": { "From": "22", "To": "22" },
+        "Protocol": "6",
+        "RuleAction": "allow",
+        "RuleNumber": "101"
+      },
+      "Type": "AWS::EC2::NetworkAclEntry"
+    },
+
+    "internetGateway": {
+      "Properties": {
+        "Tags" : [ { "Key": "VpcName", "Value": { "Ref": "vpcName" } } ]
+      },
+      "Type": "AWS::EC2::InternetGateway"
+    },
+
+    "natInstanceElasticIp": {
+      "Condition": "createProductionVpc",
+      "Properties": {
+          "Domain": "vpc",
+          "InstanceId": { "Ref": "natInstance" }
+      },
+      "Type": "AWS::EC2::EIP"
+    },
+
+    "natInstance": {
+      "Condition": "createProductionVpc",
+      "DependsOn": "attachGateway",
+      "Properties": {
+        "AssociatePublicIpAddress": "true",
+        "IamInstanceProfile": { "Ref": "s3AccessRole" },
+        "ImageId": { "Fn::FindInMap" : ["Environments", { "Ref": "vpcName" }, "natAmiId"] },
+        "InstanceType": "t2.small",
+        "KeyName": { "Fn::FindInMap" : ["Environments", { "Ref": "vpcName" }, "keyName"] },
+        "NetworkInterfaces" : [{
+          "DeleteOnTermination": "true",
+          "DeviceIndex": "0",
+          "GroupSet" : [
+            {
+              "Ref": "natSecurityGroup"
+            }
+          ],
+          "SubnetId": {
+            "Ref": "publicSubnet1"
+          }
+        }
+        ],
+        "SourceDestCheck"   : "false",
+        "Tags" : [
+          {
+              "Key": "Description",
+              "Value": "Production NAT instance for private subnet Internet connectivity."
+          },
+          {
+              "Key": "Name",
+              "Value": "Production NAT 1."
+          }
+        ]
+      },
+      "Type": "AWS::EC2::Instance"
+    },
+
+    "natSecurityGroup" : {
+      "Condition": "createProductionVpc",
+      "DependsOn" : ["vpc"],
+      "Properties" : {
+        "GroupDescription" : "NAT Security Group",
+        "SecurityGroupIngress" : [
+          {
+            "CidrIp" : { "Fn::FindInMap" : ["Environments", { "Ref": "vpcName" }, "inboundSSH"] },
+            "FromPort" : "22",
+            "IpProtocol" : "tcp",
+            "ToPort" : "22"
+          }
+        ],
+        "Tags" : [
+          { "Key" : "Name", "Value" : "NAT Security Group" }
+        ],
+        "VpcId" : { "Ref" : "vpc" }
+      },
+      "Type" : "AWS::EC2::SecurityGroup"
+    },
+
+    "networkAcl": {
+      "Properties": {
+        "Tags" : [ { "Key": "VpcName", "Value": { "Ref": "vpcName" } } ],
+        "VpcId": { "Ref": "vpc" }
+      },
+      "Type": "AWS::EC2::NetworkAcl"
+    },
+
+    "outBoundHTTPNetworkAclEntry": {
+      "Properties": {
+        "CidrBlock": "0.0.0.0/0",
+        "Egress": "true",
+        "NetworkAclId": { "Ref": "networkAcl" },
+        "PortRange": { "From": "80", "To": "80" },
+        "Protocol": "6",
+        "RuleAction": "allow",
+        "RuleNumber": "100"
+      },
+      "Type": "AWS::EC2::NetworkAclEntry"
+    },
+
+    "outBoundHTTPSNetworkAclEntry": {
+      "Properties": {
+        "CidrBlock": "0.0.0.0/0",
+        "Egress": "true",
+        "NetworkAclId": { "Ref": "networkAcl" },
+        "PortRange": { "From": "443", "To": "443" },
+        "Protocol": "6",
+        "RuleAction": "allow",
+        "RuleNumber": "101"
+      },
+      "Type": "AWS::EC2::NetworkAclEntry"
+    },
+
+    "outBoundResponsePortsNetworkAclEntry": {
+      "Properties": {
+        "CidrBlock": "0.0.0.0/0",
+        "Egress": "true",
+        "NetworkAclId": { "Ref": "networkAcl" },
+        "PortRange": { "From": "1024", "To": "65535" },
+        "Protocol": "6",
+        "RuleAction": "allow",
+        "RuleNumber": "102"
+      },
+      "Type": "AWS::EC2::NetworkAclEntry"
+    },
+
+    "privateRoute": {
+      "Condition": "createProductionVpc",
+      "DependsOn": "attachGateway",
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "InstanceId": { "Ref": "natInstance" },
+        "RouteTableId": { "Ref": "routeTable" }
+      },
+      "Type": "AWS::EC2::Route"
+    },
+
+    "privateSubnet1": {
+      "Properties": {
+        "AvailabilityZone" : "us-east-1a",
+        "CidrBlock": { "Fn::FindInMap" : ["Environments", { "Ref": "vpcName" }, "privateSubnetCidr1"] },
+        "MapPublicIpOnLaunch": "false",
+        "Tags" : [
+          { "Key": "Name", "Value" : { "Fn::Join" : [ "-", [ { "Ref" : "vpcName" }, "vpc"] ] } },
+          { "Key": "VpcName", "Value": { "Ref": "vpcName" } }
+        ],
+        "VpcId": { "Ref": "vpc" }
+      },
+      "Type": "AWS::EC2::Subnet"
+    },
+
+    "privateSubnet2": {
+      "Condition": "createTrainingVpc",
+      "Properties": {
+        "AvailabilityZone" : "us-east-1d",
+        "CidrBlock": { "Fn::FindInMap" : ["Environments", { "Ref": "vpcName" }, "privateSubnetCidr2"] },
+        "MapPublicIpOnLaunch": "false",
+        "Tags" : [
+          { "Key": "Name", "Value": "Private Subnet 2 (Training)" },
+          { "Key": "VpcName", "Value": { "Ref": "vpcName" } }
+        ],
+        "VpcId": { "Ref": "vpc" }
+      },
+      "Type": "AWS::EC2::Subnet"
+    },
+
+    "privateSubnet3": {
+      "Condition": "createProductionVpc",
+      "Properties": {
+        "AvailabilityZone" : "us-east-1e",
+        "CidrBlock": { "Fn::FindInMap" : ["Environments", { "Ref": "vpcName" }, "privateSubnetCidr3"] },
+        "MapPublicIpOnLaunch": "false",
+        "Tags" : [
+          { "Key": "Name", "Value": "Private Subnet 3 (Production)" },
+          { "Key": "VpcName", "Value": { "Ref": "vpcName" } }
+        ],
+        "VpcId": { "Ref": "vpc" }
+      },
+      "Type": "AWS::EC2::Subnet"
+    },
+
+    "publicRoute": {
+      "DependsOn": "attachGateway",
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": { "Ref": "internetGateway" },
+        "RouteTableId": { "Ref": "routeTable" }
+      },
+      "Type": "AWS::EC2::Route"
+    },
+
+    "publicSubnet1": {
+      "Properties": {
+        "AvailabilityZone" : "us-east-1a",
+        "CidrBlock": { "Fn::FindInMap" : ["Environments", { "Ref": "vpcName" }, "publicSubnetCidr1"] },
+        "MapPublicIpOnLaunch": "true",
+        "Tags" : [
+          { "Key": "Name", "Value" : { "Fn::Join" : [ "-", [ { "Ref" : "vpcName" }, "vpc"] ] } },
+          { "Key": "VpcName", "Value": { "Ref": "vpcName" } }
+        ],
+        "VpcId": { "Ref": "vpc" }
+      },
+      "Type": "AWS::EC2::Subnet"
+    },
+
+    "publicSubnet2": {
+      "Condition": "createTrainingVpc",
+      "Properties": {
+        "AvailabilityZone" : "us-east-1d",
+        "CidrBlock": { "Fn::FindInMap" : ["Environments", { "Ref": "vpcName" }, "publicSubnetCidr2"] },
+        "MapPublicIpOnLaunch": "true",
+        "Tags" : [
+          { "Key": "Name", "Value": "Public Subnet 2 (Training)" },
+          { "Key": "VpcName", "Value": { "Ref": "vpcName" } }
+        ],
+        "VpcId": { "Ref": "vpc" }
+      },
+      "Type": "AWS::EC2::Subnet"
+    },
+
+    "publicSubnet3": {
+      "Condition": "createProductionVpc",
+      "Properties": {
+        "AvailabilityZone" : "us-east-1e",
+        "CidrBlock": { "Fn::FindInMap" : ["Environments", { "Ref": "vpcName" }, "publicSubnetCidr3"] },
+        "MapPublicIpOnLaunch": "true",
+        "Tags" : [
+          { "Key": "Name", "Value": "Public Subnet 3 (Production)" },
+          { "Key": "VpcName", "Value": { "Ref": "vpcName" } }
+        ],
+        "VpcId": { "Ref": "vpc" }
+      },
+      "Type": "AWS::EC2::Subnet"
+    },
+
+    "publicSubnetRouteTableAssociation1": {
+      "Properties": {
+        "SubnetId": { "Ref": "publicSubnet1" },
+        "RouteTableId": { "Ref": "routeTable" }
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation"
+    },
+
+    "publicSubnetRouteTableAssociation2": {
+      "Condition": "createTrainingVpc",
+      "Properties": {
+        "SubnetId": { "Ref": "publicSubnet2" },
+        "RouteTableId": { "Ref": "routeTable" }
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation"
+    },
+
+    "publicSubnetRouteTableAssociation3": {
+      "Condition": "createProductionVpc",
+      "Properties": {
+        "SubnetId": { "Ref": "publicSubnet3" },
+        "RouteTableId": { "Ref": "routeTable" }
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation"
+    },
+
+    "routeTable": {
+      "Properties": {
+        "Tags" : [ { "Key": "VpcName", "Value": { "Ref": "vpcName" } } ],
+        "VpcId": { "Ref": "vpc" }
+      },
+      "Type": "AWS::EC2::RouteTable"
+    },
+
+    "s3AccessRole" : {
+      "Properties" : {
+        "AssumeRolePolicyDocument" : {
+          "Statement" : [ {
+            "Action" : [ "sts:AssumeRole" ],
+            "Effect" : "Allow",
+            "Principal" : {
+              "Service" : [ "ec2.amazonaws.com" ]
+            }
+          } ]
+        },
+        "Path" : "/"
+      },
+      "Type"  : "AWS::IAM::Role"
+    },
+
+    "s3Bucket": {
+      "Properties": {
+        "AccessControl": { "Fn::FindInMap" : ["Environments", { "Ref": "vpcName" }, "s3AccessPolicy"] },
+        "BucketName": { "Fn::FindInMap" : ["Environments", { "Ref": "vpcName" }, "s3Bucket"] }
+      },
+      "Type": "AWS::S3::Bucket"
+    },
+
+    "s3RolePolicies" : {
+        "Properties" : {
+          "PolicyDocument" : {
+            "Statement" : [ {
+            "Effect" : "Allow",
+            "Action" : "s3:*",
+            "Resource" : "*"
+          }] },
+        "PolicyName" : "s3access",
+        "Roles" : [ { "Ref" : "s3AccessRole" } ]
+      },
+      "Type" : "AWS::IAM::Policy"
+    },
+
+    "vpc": {
+      "Properties": {
+        "CidrBlock": { "Fn::FindInMap" : ["Environments", { "Ref": "vpcName" }, "vpcCidrBlock"] },
+        "Tags" : [ { "Key": "Name", "Value": { "Ref": "vpcName" } } ]
+      },
+      "Type": "AWS::EC2::VPC"
+    }
+  },
+
+  "Outputs": {
+    "defaultInstanceProfile": {
+      "Description": "The reference ID for the default IAM role granting read/write access to the specified S3 bucket.",
+      "Value": { "Ref": "defaultInstanceProfile" }
+    },
+    "defaultSecurityGroupId": {
+      "Description": "The security group ID for the VPC's default Security Group.",
+      "Value": { "Fn::GetAtt": [ "defaultSecurityGroup" , "GroupId" ] }
+    },
+    "natSecurityGroupId": {
+      "Condition": "createProductionVpc",
+      "Description": "The security group ID for the VPC's NAT Security Group.",
+      "Value": { "Fn::GetAtt": [ "natSecurityGroup" , "GroupId" ] }
+    },
+    "publicSubnet1": {
+      "Description": "Reference ID for the first public subnet.",
+      "Value": { "Ref": "publicSubnet1" }
+    },
+    "publicSubnet2": {
+      "Condition": "createTrainingVpc",
+      "Description": "Reference ID for the second public subnet.",
+      "Value": { "Ref": "publicSubnet2" }
+    },
+    "publicSubnet3": {
+      "Condition": "createProductionVpc",
+      "Description": "Reference ID for the third public subnet.",
+      "Value": { "Ref": "publicSubnet3" }
+    },
+    "privateSubnet1": {
+      "Description": "Reference ID for the first private subnet.",
+      "Value": { "Ref": "privateSubnet1" }
+    },
+    "privateSubnet2": {
+      "Condition": "createTrainingVpc",
+      "Description": "Reference ID for the second private subnet.",
+      "Value": { "Ref": "privateSubnet2" }
+    },
+    "privateSubnet3": {
+      "Condition": "createProductionVpc",
+      "Description": "Reference ID for the third private subnet.",
+      "Value": { "Ref": "privateSubnet3" }
+    },
+    "s3BucketName": {
+      "Description": "Name of the S3 bucket.",
+      "Value": { "Ref": "s3Bucket" }
+    },
+    "vpcId": {
+      "Description": "The VPC identifier.",
+      "Value": { "Ref": "vpc" }
+    }
+  }
+}

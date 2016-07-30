@@ -1,0 +1,27 @@
+GIT
+  remote: https://github.com/DonMills/ruby-kms-s3-gem.git
+  revision: e3db6ee315ec19dae25b192be0e03be359e7d9d4
+  specs:
+    s3encrypt (0.1.6)
+      aws-sdk
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    aws-sdk (2.4.4)
+      aws-sdk-resources (= 2.4.4)
+    aws-sdk-core (2.4.4)
+      jmespath (~> 1.0)
+    aws-sdk-resources (2.4.4)
+      aws-sdk-core (= 2.4.4)
+    jmespath (1.3.1)
+
+PLATFORMS
+  x86-mingw32
+
+DEPENDENCIES
+  aws-sdk
+  s3encrypt (= 0.1.6)!
+
+BUNDLED WITH
+   1.12.5

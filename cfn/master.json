@@ -1,0 +1,95 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "AWS CloudFormation template to create conditional VPCs and appropriate security groups.",
+
+  "Conditions": {
+    "createVpc": { "Fn::Equals" : [{ "Ref": "createVpc" }, "yes"] },
+    "createJenkins": { "Fn::Equals" : [{ "Ref": "createJenkins" }, "yes"] },
+    "createDevVpc": { "Fn::Equals" : [{ "Ref": "vpcName" }, "dev"] },
+    "createTrainingVpc": { "Fn::Equals" : [{ "Ref": "vpcName" }, "training"] },
+    "createProductionVpc": { "Fn::Equals" : [{ "Ref": "vpcName" }, "production"] }
+  },
+
+  "Parameters": {
+    "createJenkins": {
+      "AllowedValues": ["no", "yes"],
+      "Default": "no",
+      "Description": "Would you like to create a Jenkins instance in the new VPC?",
+      "Type": "String"
+    },
+
+    "createVpc": {
+      "AllowedValues": ["no", "yes"],
+      "Default": "no",
+      "Description": "Is this your first time creating this VPC?",
+      "Type": "String"
+    },
+
+    "vpcName": {
+      "AllowedValues": ["dev", "training", "production"],
+      "ConstraintDescription": "Conditional driver, determines VPC security and subnet settings.",
+      "Default": "dev",
+      "Description": "The friendly identifier of the VPC to be created.",
+      "Type": "String"
+    }
+  },
+
+  "Resources": {
+    "jenkinsInstance": {
+      "Condition": "createJenkins",
+      "Properties": {
+        "Parameters" : {
+          "dnsPrefix": "jenkins",
+          "vpcName": { "Ref": "vpcName" }
+        },
+        "Tags" : [
+          {
+            "Key": "Name",
+            "Value": "Jenkins Instance"
+          },
+          {
+            "Key": "vpcName",
+            "Value": { "Ref" : "vpcName" }
+          }
+        ],
+        "TemplateURL" : "https://s3.amazonaws.com/dtashner/cfn/jenkins.json"
+      },
+      "Type": "AWS::CloudFormation::Stack"
+    },
+
+    "vpc": {
+      "Condition": "createVpc",
+      "Properties": {
+        "Parameters" : {
+          "vpcName": { "Ref": "vpcName" }
+        },
+        "Tags" : [ { "Key": "vpcName", "Value": { "Ref" : "vpcName" } } ],
+        "TemplateURL" : "https://s3.amazonaws.com/dtashner/cfn/vpc.json"
+      },
+      "Type": "AWS::CloudFormation::Stack"
+    }
+  },
+
+  "Outputs": {
+    "defaultSecurityGroupId": {
+      "Condition": "createVpc",
+      "Description": "The default security group identifier.",
+      "Value": { "Fn::GetAtt": [ "vpc" , "Outputs.defaultSecurityGroupId" ] }
+    },
+    "natSecurityGroupId": {
+      "Condition": "createProductionVpc",
+      "Description": "The security group ID for the VPC's NAT Security Group.",
+      "Value": { "Fn::GetAtt": [ "vpc" , "Outputs.natSecurityGroupId" ] }
+    },
+    "s3BucketName": {
+      "Condition": "createVpc",
+      "Description": "Name of the S3 bucket.",
+      "Value": { "Fn::GetAtt": [ "vpc" , "Outputs.s3BucketName" ] }
+    },
+    "vpcId": {
+      "Condition": "createVpc",
+      "Description": "The VPC identifier.",
+      "Value": { "Fn::GetAtt": [ "vpc" , "Outputs.vpcId" ] }
+    }
+  }
+}

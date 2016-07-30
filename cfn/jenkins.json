@@ -1,0 +1,123 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "AWS CloudFormation template to create a Jenkins instance with an associated Route 53 entry.",
+
+  "Mappings": {
+    "Environments": {
+      "dev": {
+        "amiId": "ami-6869aa05",
+        "instanceProfile": "dev-vpc-vpc-6O1JXM9YYPY-s3AccessRole-1L7ZS2WI4JAEC",
+        "instanceType": "t2.small",
+        "keyName": "dtashner-aws-dev",
+        "securityGroupId": "sg-8f495cf4",
+        "subnetId": "subnet-f6d536bf"
+      },
+      "training": {
+        "amiId": "ami-6869aa05",
+        "instanceProfile": "dtashner-training-vpc-vpc-YURIFI9NN16-s3AccessRole-B0PS1L7MAAOR",
+        "instanceType": "t2.medium",
+        "keyName": "dtashner-aws-training",
+        "securityGroupId": "sg-e2415499",
+        "subnetId": "subnet-3ad03373"
+      },
+      "production": {
+        "amiId": "ami-6869aa05",
+        "instanceProfile": "dtashner-production-vpc-vpc-1TRHZ5DTGBKX5-s3AccessRole-R1UGGWZRUQRS",
+        "instanceType": "t2.medium",
+        "keyName": "dtashner-aws-production",
+        "securityGroupId": "sg-4eb7bd35",
+        "subnetId": "subnet-bfe0d395"
+      }
+    }
+  },
+
+  "Parameters": {
+    "dnsPrefix": {
+      "Default": "jenkins",
+      "Description": "Route 53 hostname for this instance.",
+      "Type": "String"
+    },
+    "dnsZone": {
+      "Default": "davetashner.com",
+      "Description": "Route 53 hosted zone for the instance's DNS entry (DNS suffix).",
+      "Type": "String"
+    },
+    "vpcName": {
+      "AllowedValues": ["dev", "training", "production"],
+      "ConstraintDescription": "Conditional driver, determines VPC security and subnet settings for this instance.",
+      "Default": "dev",
+      "Description": "The friendly identifier of the VPC where the instance should be created.",
+      "Type": "String"
+    }
+  },
+
+  "Resources": {
+    "jenkinsInstance" : {
+      "Properties" : {
+        "IamInstanceProfile": { "Fn::FindInMap" : [ "Environments", { "Ref" : "vpcName" }, "instanceProfile" ]},
+        "ImageId" : { "Fn::FindInMap" : [ "Environments", { "Ref" : "vpcName" }, "amiId" ]},
+        "InstanceType" : { "Fn::FindInMap" : [ "Environments", { "Ref" : "vpcName" }, "instanceType" ]},
+        "KeyName" : { "Fn::FindInMap" : [ "Environments", { "Ref" : "vpcName" }, "keyName" ]},
+        "SecurityGroupIds": [{ "Fn::FindInMap" : [ "Environments", { "Ref" : "vpcName" }, "securityGroupId" ]}],
+        "SubnetId": { "Fn::FindInMap" : [ "Environments", { "Ref" : "vpcName" }, "subnetId" ]},
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Jenkins Instance"
+          },
+          {
+            "Key": "VPC Identifier",
+            "Value": { "Ref": "vpcName" }
+          }
+        ],
+        "UserData": { "Fn::Base64" : { "Fn::Join" : ["", [
+             "#!/bin/bash -xe\n",
+             "yum update -y\n",
+             "yum install -y git ** gem install chef-dk\n",
+             "mkdir -p /opt/chef/cookbooks && cd /opt/chef/\n",
+             "echo \"
+             source \"https://supermarket.chef.io\"
+
+             cookbook 'jenkins'
+             cookbook 'compat_resource' git: 'git://github.com/chef-cookbooks/compat_resource.git'
+             \" > /opt/chef/Berksfile\n",
+             "curl https://omnitruck.chef.io/install.sh | sudo bash -s -- -c current -P chefdk\n",
+             "berks install\n",
+             "chef-client -z -o jenkins"
+		     ]]}}
+      },
+      "Type" : "AWS::EC2::Instance"
+    },
+
+    "jenkinsDns" : {
+      "Properties" : {
+        "Comment" : "DNS name for Jenkins instance.",
+         "dnsZoneName" : {
+            "Fn::Join" : [ "", [
+               { "Ref" : "dnsZone" }, "."
+            ] ]
+         },
+         "Name" : {
+            "Fn::Join" : [ "", [
+               {"Ref" : "jenkinsInstance"}, ".",
+               {"Ref" : "AWS::Region"}, ".",
+               {"Ref" : "dnsZone"} ,"."
+            ] ]
+         },
+         "ResourceRecords" : [
+            { "Fn::GetAtt" : [ "jenkinsInstance", "PublicIp" ] }
+         ],
+         "TTL" : "900",
+         "Type" : "A"
+      },
+      "Type" : "AWS::Route53::RecordSet"
+   }
+  },
+
+  "Outputs": {
+    "jenkinsIpAddress": {
+      "Description": "The Public IP Address for the Jenkins instance.",
+      "Value": { "Ref": "jenkinsInstance" }
+    }
+  }
+}
