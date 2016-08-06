@@ -1,0 +1,7 @@
+name 's3encrypt'
+maintainer 'Dave Tashner'
+maintainer_email 'davetashner@gmail.com'
+license 'apache2'
+description 'Assists with the sensitive retrieval of secrets from S3 encrypted using the s3encrypt Ruby gem.'
+long_description 'Builds the s3encrypt RubyGem from source, calls AWS KMS to decrypt secrets file stored in S3, converts secrets file to hash and makes passwords available to Chef client.'
+version '0.1.0'

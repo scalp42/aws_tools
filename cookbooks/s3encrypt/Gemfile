@@ -1,0 +1,7 @@
+source 'https://rubygems.org'
+
+gem 'aws-sdk'
+gem 'kitchen-ec2'
+gem 's3encrypt', :git => 'https://github.com/DonMills/ruby-kms-s3-gem.git'
+gem "test-kitchen"
+gem "ec2"

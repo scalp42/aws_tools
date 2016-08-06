@@ -1,1 +1,3 @@
 secrets/*
+cookbooks/s3encrypt/.kitchen
+cookbooks/s3encrypt/asciinema_script.txt

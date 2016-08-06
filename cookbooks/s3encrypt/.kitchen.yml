@@ -1,0 +1,31 @@
+---
+driver:
+  associate_public_ip: true
+  aws_ssh_key_id: <%= ENV['AWS_SSH_KEY_ID'] %>
+  iam_profile_name: S3_Access
+  instance_type: t2.micro
+  name: ec2
+  region: us-east-1
+  require_chef_omnibus: true
+  security_group_ids: ["sg-8f495cf4"]
+  subnet_id: subnet-f6d536bf
+  tags:
+    Name: test-kitchen-amazon
+
+transport:
+ ssh_key: <%= ENV['AWS_SSH_KEY_PATH'] %>
+ username: ec2-user
+
+provisioner:
+  name: chef_zero
+
+platforms:
+  - name: amazon-linux
+    driver:
+      image_id: ami-6869aa05
+
+suites:
+  - name: default
+    run_list:
+      - recipe[s3encrypt::default]
+    attributes:
