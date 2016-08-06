@@ -95,8 +95,7 @@ S3encrypt.putfile_ssekms("secrets.json", "secrets/secrets.json", "dtashner", "ca
 
 #S3encrypt.putfile_ssekms("local_secrets_file", "s3_path_to_secrets_file", "s3_bucket", "encryption_context", "aws_kms_customer_master_key"")
 ```
-
-[Please click here](http://asciinema.org/a/aa25fhuhnpvb7gzrcn3jbiat2) to view a quick video displaying how secrets are uploaded to S3.
+[![asciicast](http://asciinema.org/a/aa25fhuhnpvb7gzrcn3jbiat2) to view a quick video displaying how secrets are uploaded to S3.
 
 #### *Results*
 After succesfully running the `uploadsecrets.rb` script, there should be 2 new files visible in the S3 bucket that you selected:
