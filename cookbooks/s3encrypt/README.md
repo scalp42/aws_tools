@@ -12,7 +12,7 @@ The following gems are required to upload secret files to S3 using the s3encrypt
 * aws-sdk - Provides the API interface between your workstation and your AWS account
 * s3encrypt - Provides a library to interact with your [AWS KMS Customer Master Key (CMK)](https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#master_keys) and provided S3 bucket
 
-The following gems are required to download secret filesl from S3 using the s3encrypt gem:
+The following gems are required to download secret files from S3 using the s3encrypt gem:
 
 * [aws-sdk](https://rubygems.org/gems/aws-sdk) - Provides the API interface between your EC2 instance and your AWS account
 * [json](https://rubygems.org/gems/json) - Provides a JSON parsing method that allows the Chef client to convert a secrets JSON hash into a Ruby hash for password injection into properties files/environment variables
