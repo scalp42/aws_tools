@@ -141,7 +141,7 @@ S3encrypt.putfile_ssekms("secrets.json", "secrets/secrets.json", "dtashner", "ca
 
 
 ## Platforms
-- As this cookbook facilitates and depends on [the use of a gem](https://github.com/DonMills/ruby-kms-s3-gem) that was solely built for AWS, this cookbook can only be used on AWS instances. This cookbook has been tested on:
+As this cookbook facilitates and depends on [the use of a gem](https://github.com/DonMills/ruby-kms-s3-gem) that was solely built for AWS, this cookbook can only be used on AWS instances. This cookbook has been tested on:
 
 - Amazon Linux
 - CentOS 6
@@ -152,10 +152,7 @@ S3encrypt.putfile_ssekms("secrets.json", "secrets/secrets.json", "dtashner", "ca
 - Windows 2008R2
 - Windows 2012R2
 
-
-## Downloading Secrets
-
-### Cookbook Functionality
+## Cookbook Functionality
 
 #### Attributes
 This Chef cookbook provides a few default attributes to assist in the decryption and utilization of secrets files, including passwords.
