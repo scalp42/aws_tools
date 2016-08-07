@@ -30,6 +30,34 @@ Why would we do this? Why should we use a custom Ruby Gem to handle the encrypti
   - In the target properties file(s) where secrets would exist in plain text anyway
   - In environment variables on the target server, if that meets your security standards
 
+### *About The Gem*
+
+The following methods for uploading files to S3 are provided by the [s3encrypt](https://github.com/DonMills/ruby-kms-s3-gem) gem; use any of the following methods to upload your secrets depending on the level of server-side encryption you prefer on files in your S3 buckets:
+
+   * `s3encrypt_putfile()` - Uploads an encrypted file to an S3 bucket of your choice with no server-side encryption
+   * `s3encrypt_putfilekms()` - Uploads an encrypted file to an S3 bucket of your choice using S3 server-side encryption provided by your KMS master key
+   * `s3encrypt_putfilesse()` - Uploads an encrypted file to an S3 bucket of your choice using S3 server-side encryption provided by Amazon
+
+The `S3encrypt.putfile()` methods expect several arguments as follows:
+
+   1. The filename (including extension) of the file to be encrypted.  The s3encrypt Ruby gem does NOT require this to be a JSON file, but the s3encrypt cookbook expects it to be.
+   2. The path in S3 to the secrets file.  This must not begin with a forward slash and assumes that the S3 bucket is already created.  Please specify this argument by listing any sub-bucket folders followed by the secrets filename (including extension).
+   3. The name of your S3 bucket.
+   4. The value for your encryption context.  The encryption context is entirely arbitrary, but the `getfile()` method of the s3encrypt Gem will expect the same encryption context that you used to upload the secrets.  There is no way to retrieve the secrets unless the same encryption context is provided during the decryption call.
+   5. The unique identifier for your AWS KMS master key that should be used to generate an encryption key and encrypt your specified files.
+
+
+The following method for downloading and decrypting files is provided by the s3encrypt gem.
+   * `S3encrypt.getfile()` - Decrypts and downloads an encrypted file from an S3 bucket of your choice
+
+The `S3encrypt.getfile()` method expects several arguments as follows:
+
+   1. The filename (including extension) of the file to be decrypted.  The s3encrypt Ruby gem does NOT require this to be a JSON file, but the s3encrypt cookbook expects it to be.
+   2. The path in S3 to the secrets file.  This must not begin with a forward slash and assumes that the secrets file already exists in the given path.  Please specify this argument by listing any sub-bucket folders followed by the secrets filename (including extension).
+   3. The name of your S3 bucket.
+   4. The value for your encryption context.  The encryption context is entirely arbitrary, but the `getfile()` method of the s3encrypt Gem will expect the same encryption context that you used to upload the secrets with the `putfile()` method.  There is no way to retrieve the secrets unless the same encryption context is provided during the decryption call.
+
+
 ## Requirements
 
 ### *AWS Configuration*
@@ -69,7 +97,6 @@ Your AWS account must have an AWS KMS Customer Master Key created and your user 
 
 Any servers that need to access your secret files through the Chef cookbook must have an associated IAM profile with policies granting the ability to decrypt through KMS and read from S3.
 
-
 ### *Gems*
 The following gems are required to upload secret files to S3 using the s3encrypt gem:
 
@@ -83,22 +110,11 @@ The following gems are required to download secret files from S3 using the s3enc
 * [s3encrypt](https://github.com/DonMills/ruby-kms-s3-gem) - Provides a library to interact with your [AWS KMS Customer Master Key (CMK)](https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#master_keys) and provided S3 bucket
 
 
+### *Packages*
+Git (for building s3encrypt from source) and the chef-client should be available on the target server or workstation where the secrets will be utilized.  This cookbook was tested on chef-client 12.12, but is known to work on chef-client versions as old as 12.3.
+
 ### *Helper Script*
-It is also helpful to create a helper script to call the s3encrypt gem. Your AWS credentials should be configured on your local workstation prior to running this script.
-
-The following methods for uploading files to S3 are provided by the gem; use any of the following methods to upload your secrets depending on the level of server-side encryption you prefer on files in your S3 buckets:
-
-* `s3encrypt_putfile()` - Uploads an encrypted file to an S3 bucket of your choice with no server-side encryption
-* `s3encrypt_putfilekms()` - Uploads an encrypted file to an S3 bucket of your choice using S3 server-side encryption provided by your KMS master key
-* `s3encrypt_putfilesse()` - Uploads an encrypted file to an S3 bucket of your choice using S3 server-side encryption provided by Amazon
-
-The `S3encrypt.putfile()` methods expect several arguments as follows:
-
-1. The filename (including extension) of the file to be encrypted.  The s3encrypt Ruby gem does NOT require this to be a JSON file, but the s3encrypt cookbook expects it to be.
-2. The path in S3 to the secrets file.  This must not begin with a forward slash and assumes that the S3 bucket is already created.  Please specify this argument by listing any sub-bucket folders followed by the secrets filename (including extension).
-3. The name of your S3 bucket.
-4. The value for your encryption context.  The encryption context is entirely arbitrary, but the `getfile()` method of the s3encrypt Gem will expect the same encryption context that you used to upload the secrets.  There is no way to retrieve the secrets unless the same encryption context is provided during the decryption call.
-5. The unique identifier for your AWS KMS master key that should be used to generate an encryption key and encrypt your specified files.
+It is easiest to create a helper script to call the s3encrypt gem. Your AWS credentials should be configured on your local workstation prior to running this script.
 
 _uploadsecrets.rb_
 ```
@@ -122,21 +138,6 @@ S3encrypt.putfile_ssekms("secrets.json", "secrets/secrets.json", "dtashner", "ca
 - Ubuntu 14.04
 - Windows 2008R2
 - Windows 2012R2
-
-
-Click here to view a quick video displaying how secrets are uploaded to S3.[![asciicast](http://asciinema.org/a/aa25fhuhnpvb7gzrcn3jbiat2.png)](http://asciinema.org/a/aa25fhuhnpvb7gzrcn3jbiat2)
-
-#### *Results*
-After succesfully running the `uploadsecrets.rb` script, there should be 2 new files visible in the S3 bucket that you selected:
-
-* secrets.json - The encrypted secrets file containing your hash of secrets
-* secrets.json.key - The encrypted private key generated by KMS + the s3encrypt gem, which was used to encrypt your secrets.json file
-
-Click here to view a quick video displaying the results of uploading a secrets file to S3 using S3encrypt. [![asciicast](http://asciinema.org/a/3shl0fmifw48hhqzyuwwp35y4.png)](http://asciinema.org/a/3shl0fmifw48hhqzyuwwp35y4)
-
-
-After a successful upload, your S3 bucket should have the following items:
-![image](https://i.imgur.com/IbNEihB.png)
 
 
 ## Downloading Secrets
@@ -289,6 +290,20 @@ end
 
    ```
 
+   Click here to view a quick video displaying how secrets are uploaded to S3.[![asciicast](http://asciinema.org/a/aa25fhuhnpvb7gzrcn3jbiat2.png)](http://asciinema.org/a/aa25fhuhnpvb7gzrcn3jbiat2)
+
+6. Results:
+ After succesfully running the `uploadsecrets.rb` script, there should be 2 new files visible in the S3 bucket that you selected:
+
+   * secrets.json - The encrypted secrets file containing your hash of secrets
+   * secrets.json.key - The encrypted private key generated by KMS + the s3encrypt gem, which was used to encrypt your secrets.json file
+
+Click here to view a quick video displaying the results of uploading a secrets file to S3 using S3encrypt. [![asciicast](http://asciinema.org/a/3shl0fmifw48hhqzyuwwp35y4.png)](http://asciinema.org/a/3shl0fmifw48hhqzyuwwp35y4)
+
+
+After a successful upload, your S3 bucket should have the following items:
+![image](https://i.imgur.com/IbNEihB.png)
+
 ### Downloading Secrets
 
 1. Include the `s3encrypt::default` recipe in your node's run_list and provide values for the following attributes:
@@ -301,7 +316,7 @@ end
 
 2. Use the Chef [template resource](https://docs.chef.io/resource_template.html) to inject the sensitive password from the Ruby hash into the properties file:
 
-  _confluence.cfg.xml.erb_
+  _~/cookbooks/your_cookbook/templates/default/confluence.cfg.xml.erb_
 
    ```
   <Resource
@@ -311,7 +326,7 @@ end
          driverClassName="oracle.jdbc.OracleDriver"
          url="jdbc:oracle:thin:@hostname:port:sid"
          username="user1"
-         password=<%= @user1pwd %>
+         password=<%= @user2pwd %>
          connectionProperties="SetBigStringTryClob=true"
 		 accessToUnderlyingConnectionAllowed="true"
          maxTotal="60"
@@ -326,9 +341,10 @@ end
     action :create
     sensitive true
     variables({
-      :user1pwd => hash['user1pwd']
+      :user1pwd => hash['user2pwd']
       }
     )
+   end
    ```
 
  3. Results
@@ -345,8 +361,8 @@ end
            type="javax.sql.DataSource"
            driverClassName="oracle.jdbc.OracleDriver"
            url="jdbc:oracle:thin:@hostname:port:sid"
-           username="user1"
-           password=<%= @user1pwd %>
+           username="user2"
+           password="MySuperSecretP@ssw0rdIsB3tt3rThanUrz"
            connectionProperties="SetBigStringTryClob=true"
        accessToUnderlyingConnectionAllowed="true"
            maxTotal="60"
