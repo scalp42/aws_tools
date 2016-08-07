@@ -141,11 +141,11 @@ After a successful upload, your S3 bucket should have the following items:
 #### *Default Attributes*
 This Chef cookbook provides a few default attributes to assit the decryption and utilization of secrets files:
 
-* 'default['s3encrypt']['aws_region']' = 'us-east-1'
-* 'default['s3encrypt']['encryption_context']' = "calvin_and_hobbes"
-* 'default['s3encrypt']['local_secret_path']' = "#{::Chef::Config['file_cache_path']}/secrets.json"
-* 'default['s3encrypt']['s3_secret_path']' = 'secrets/secrets.json'
-* 'default['s3encrypt']['s3_bucket']' = 'dtashner'
+* `default['s3encrypt']['aws_region']` = 'us-east-1'
+* `default['s3encrypt']['encryption_context']` = "calvin_and_hobbes"
+* `default['s3encrypt']['local_secret_path']` = "#{::Chef::Config['file_cache_path']}/secrets.json"
+* `default['s3encrypt']['s3_secret_path']` = 'secrets/secrets.json'
+* `default['s3encrypt']['s3_bucket']` = 'dtashner'
 
 #### *build_s3encrypt Recipe*
 Currently, the s3encrypt gem is not available on [RubyGems](https://rubygems.org). Until the gem becomes available, it is necessary to build it from source.  The `s3encrypt::build_s3encrypt` recipe handles this by cloning the source Git repository and building the gem manually.  The gem is then installed, after which point it can be used to decrypt secrets files stored in S3.
