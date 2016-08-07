@@ -6,25 +6,25 @@ The s3encrypt cookbook provides a wrapper for building the [s3encrypt](https://g
 ## Why?
 Why would we do this? Why should we use a custom Ruby Gem to handle the encryption of secrets when great tools like [Hashicorp's Vault](https://www.vaultproject.io/), [Chef Vault](https://blog.chef.io/2016/01/21/chef-vault-what-is-it-and-what-can-it-do-for-you/), and others already exist on the market?  Let's see...
 
-1. Vault and Chef Vault require extra servers to run.
+**1. Vault and Chef Vault require extra servers to run.**
   - Hashicorp Vault requires a server/client relationship, which will necessitate the creation/patching/management of your own Vault server
   - Chef Vault requires Chef Server, which many companies choose to run without. Even if you use Chef Server, Chef Vault uses data bags, which are fugly.
 
-2. S3encrypt requires no server
+**2. S3encrypt requires no server**
   - Since s3encrypt utilizes libraries to call AWS KMS for encryption and decryption of secrets files, there is no reliance on a tertiary server solely to host s3encrypt functions.
 
-3. S3encrypt protects against internal attacks
+**3. S3encrypt protects against internal attacks**
   - S3encrypt is reasonably good at securing secrets even within an organization where all employees have basic access to S3
     - An encryption context and S3 master key are required before any decryption activities can succeed
     - Users must determine the encryption context AND KMS master key used for original encryption prior to any attempts to decrypt the encryption key.  The encrypted encryption key CANNOT be used to decrypt the secrets file without first utilizing KMS to decrypt the encryption key.  This, in essence, provides multi-layer encryption.
 
-4. Secrets are never stored in GitHub
+**4. Secrets are never stored in GitHub**
   - Local secrets files should be added to .gitignore
 
-5. Server-side encryption
+**5. Server-side encryption**
   - S3encrypt supports multiple levels of S3 server-side encryption for security-conscious organizations (if the Hamburglar gains physical access to the disk containing your data, he will be foiled by the server-side encryption)
 
-6. Logs
+**6. Logs**
   - This cookbook utilizes the `sensitive true` property of native Chef resources to ensure that secrets are not logged by the Chef client either during the original secrets download or during the creation of the new checksum created when the secrets file contents are updated on the target filesystem.  This further ensures that secrets are only ever available in plain text:
   - On the original workstation that was used to upload the secrets (system administrator, file added to .gitignore)
   - In the target properties file(s) where secrets would exist in plain text anyway
