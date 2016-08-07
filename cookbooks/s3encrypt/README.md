@@ -136,7 +136,7 @@ Click here to view a quick video displaying the results of uploading a secrets f
 
 
 After a successful upload, your S3 bucket should have the following items:
-[![image](https://i.imgur.com/IbNEihB.png)
+![image](https://i.imgur.com/IbNEihB.png)
 
 
 ## Downloading Secrets
