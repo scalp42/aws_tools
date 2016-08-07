@@ -264,8 +264,8 @@ end
    _secrets.json_
    ```
    {
-     "user1": "P@ssw0rd1",
-     "user2": "MySuperSecretP@ssw0rdIsB3tt3rThanUrz"
+     "user1pwd": "P@ssw0rd1",
+     "user2pwd": "MySuperSecretP@ssw0rdIsB3tt3rThanUrz"
    }
    ```
 
@@ -285,14 +285,75 @@ end
 
    ```
    $ ruby upload_secrets.rb
-
-   Deet@localhost MINGW64 ~/Development/aws/secrets (master)
    $
 
    ```
 
-   ### Downloading Secrets
+### Downloading Secrets
 
+1. Include the `s3encrypt::default` recipe in your node's run_list and provide values for the following attributes:
+
+   ```
+   default['s3encrypt']['encryption_context'] = 'calvin_and_hobbes'
+   default['s3encrypt']['s3_secret_path'] = 'secrets/secrets.json'
+   default['s3encrypt']['s3_bucket'] = 'dtashner'
+   ```
+
+2. Use the Chef [template resource](https://docs.chef.io/resource_template.html) to inject the sensitive password from the Ruby hash into the properties file:
+
+  _confluence.cfg.xml.erb_
+
+   ```
+  <Resource
+         name="jdbc/confluence"
+         auth="Container"
+         type="javax.sql.DataSource"
+         driverClassName="oracle.jdbc.OracleDriver"
+         url="jdbc:oracle:thin:@hostname:port:sid"
+         username="user1"
+         password=<%= @user1pwd %>
+         connectionProperties="SetBigStringTryClob=true"
+		 accessToUnderlyingConnectionAllowed="true"
+         maxTotal="60"
+         maxIdle="20"
+         maxWaitMillis="10000"
+   />
+   ```
+
+  _yourrecipe.rb_
+   ```
+   template "#{ENV['CONFLUENCE_HOME']}/confluence.cfg.xml" do
+    action :create
+    sensitive true
+    variables({
+      :user1pwd => hash['user1pwd']
+      }
+    )
+   ```
+
+ 3. Results
+
+    ```
+    $ cd ENV['CONFLUENCE_HOME']
+    $ pwd
+      ~/confluence/conf.d/
+    $ cat ./confluence.cfg.xml
+
+    <Resource
+           name="jdbc/confluence"
+           auth="Container"
+           type="javax.sql.DataSource"
+           driverClassName="oracle.jdbc.OracleDriver"
+           url="jdbc:oracle:thin:@hostname:port:sid"
+           username="user1"
+           password=<%= @user1pwd %>
+           connectionProperties="SetBigStringTryClob=true"
+       accessToUnderlyingConnectionAllowed="true"
+           maxTotal="60"
+           maxIdle="20"
+           maxWaitMillis="10000"
+     />
+    ```
 
 # Copyright
 Apache 2.0 - Dave Tashner and Don Mills 2016
