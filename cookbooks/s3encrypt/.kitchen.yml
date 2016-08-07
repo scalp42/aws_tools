@@ -2,13 +2,13 @@
 driver:
   associate_public_ip: true
   aws_ssh_key_id: <%= ENV['AWS_SSH_KEY_ID'] %>
-  iam_profile_name: S3_Access
+  iam_profile_name: <%= ENV['AWS_DEFAULT_IAM_ROLE'] %>
   instance_type: t2.micro
   name: ec2
-  region: us-east-1
+  region: <%= ENV['AWS_REGION'] %>
   require_chef_omnibus: true
-  security_group_ids: ["sg-8f495cf4"]
-  subnet_id: subnet-f6d536bf
+  security_group_ids: [ <%= ENV['AWS_DEFAULT_SECURITY_GROUP'] %> ]
+  subnet_id: <%= ENV['AWS_DEFAULT_SUBNET'] %>
   tags:
     Name: test-kitchen-amazon
 

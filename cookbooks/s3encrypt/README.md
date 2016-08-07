@@ -8,6 +8,7 @@
 5. [Platforms](#platforms)
 6. [Downloading Secrets](#downloading-secrets)
 7. [Example](#example)
+8. [Kitchen Configuration](#kitchen-configuration)
 
 ## Description
 The s3encrypt cookbook provides a wrapper for building the [s3encrypt](https://github.com/DonMills/ruby-kms-s3-gem) RubyGem from source, retrieving a secrets file from S3 that was uploaded using any of the `put_file` methods of the s3encrypt gem, decrypting the secrets file, and making the secrets available to the Chef client for injection into properties files/environment variables, etc.  In short, this is a lightweight method of secrets management that allows Chef and AWS to do the heavy lifting for you, while simultaneously not requiring creation, maintenance, or patching of a dedicated secrets server.
@@ -382,6 +383,19 @@ After a successful upload, your S3 bucket should have the following items:
            maxWaitMillis="10000"
      />
     ```
+
+## Kitchen Configuration
+This cookbook is enabled for use with Test Kitchen but requires the [kitchen-ec2](https://rubygems.org/gems/kitchen-ec2) gem to be of any use, since this cookbook relies on running inside AWS instances.  An [example `.kitchen.yml` is available here](https://github.com/dtashner/aws_tools/blob/master/cookbooks/s3encrypt/.kitchen.yml).
+
+The Test Kitchen configuration assumes that you have the kitchen-ec2 RubyGem and AWS CLI installed and configured.  It also assumes that the following environment variables are set on your local workstation:
+
+```
+AWS_SSH_KEY_ID = name_of_ec2_key_pair_without_extension
+AWS_DEFAULT_IAM_ROLE = name_of_iam_role_granting_access_to_s3_and_kms
+AWS_REGION = default-aws-region
+AWS_DEFAULT_SECURITY_GROUP = sg-123jbej12
+AWS_SSH_KEY_PATH = ~/.ssh/my_private_ssh_key.pem
+```
 
 # Copyright
 Apache 2.0 - Dave Tashner and Don Mills 2016
