@@ -360,7 +360,7 @@ After a successful upload, your S3 bucket should have the following items:
    end
    ```
 
- 3. Results
+3. Results
 
     ```
     $ cd ENV['CONFLUENCE_HOME']
