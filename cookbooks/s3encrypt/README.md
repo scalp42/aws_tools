@@ -9,8 +9,8 @@ As this cookbook facilitates the use of a gem that was solely built for AWS, thi
 ### *Gems*
 The following gems are required to upload secret files to S3 using the s3encrypt gem:
 
-* aws-sdk - Provides the API interface between your workstation and your AWS account
-* s3encrypt - Provides a library to interact with your [AWS KMS Customer Master Key (CMK)](https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#master_keys) and provided S3 bucket
+* [aws-sdk](https://rubygems.org/gems/aws-sdk) - Provides the API interface between your workstation and your AWS account
+* [s3encrypt](https://github.com/DonMills/ruby-kms-s3-gem) - Provides a library to interact with your [AWS KMS Customer Master Key (CMK)](https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#master_keys) and provided S3 bucket
 
 The following gems are required to download secret files from S3 using the s3encrypt gem:
 
