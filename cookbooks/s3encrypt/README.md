@@ -35,7 +35,9 @@ Why would we do this? Why should we use a custom Ruby Gem to handle the encrypti
   - If you use Chef Server, this method avoids storing passwords as Chef attributes, which will ultimately end up visible on the Chef server in the node object information for each node.  Instead, this method uses in-memory Ruby variables that are destroyed at the termination of each chef-client run.
 
 **6. Server-side encryption**
-  - S3encrypt supports multiple levels of S3 server-side encryption for security-conscious organizations (if the Hamburglar gains physical access to the Amazon data center containing your data, he will be foiled by server-side encryption)
+  - S3encrypt supports multiple methods of S3 server-side encryption for security-conscious organizations (if the Hamburglar gains physical access to the Amazon data center containing your data, he will be foiled by server-side encryption):
+    * KMS encryption - `S3encrypt.putfile_ssekms()` - Uses the provided KMS CMK to enable server-side encryption of the S3 object
+    * Amazon SSE encryption - `S3encrypt.putfile_sses3()` - Uses Amazon's built-in S3 server-side encryption on the S3 object
 
 **7. Logs**
   - This cookbook utilizes the `sensitive true` property of native Chef resources to ensure that secrets are not logged by the Chef client either during the original secrets download or during any write operations to the secrets file when Chef downloads and creates the file.  This further ensures that secrets are only ever available in plain text:
@@ -48,8 +50,8 @@ Why would we do this? Why should we use a custom Ruby Gem to handle the encrypti
 The following methods for uploading files to S3 are provided by the [s3encrypt](https://github.com/DonMills/ruby-kms-s3-gem) gem; use any of the following methods to upload your secrets depending on the level of server-side encryption you prefer on files in your S3 buckets:
 
    * `s3encrypt_putfile()` - Uploads an encrypted file to an S3 bucket of your choice with no server-side encryption
-   * `s3encrypt_putfilekms()` - Uploads an encrypted file to an S3 bucket of your choice using S3 server-side encryption provided by your KMS master key
-   * `s3encrypt_putfilesse()` - Uploads an encrypted file to an S3 bucket of your choice using S3 server-side encryption provided by Amazon
+   * `S3encrypt.putfile_ssekms()` - Uploads an encrypted file to an S3 bucket of your choice using S3 server-side encryption provided by your KMS master key
+   * `S3encrypt.putfile_sses3()` - Uploads an encrypted file to an S3 bucket of your choice using S3 server-side encryption provided by Amazon
 
 The `S3encrypt.putfile()` methods expect several arguments as follows:
 
