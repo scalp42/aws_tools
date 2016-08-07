@@ -351,12 +351,12 @@ After a successful upload, your S3 bucket should have the following items:
   _yourrecipe.rb_
    ```
    template "#{ENV['CONFLUENCE_HOME']}/confluence.cfg.xml" do
-    action :create
-    sensitive true
-    variables({
-      :user2pwd => hash['user2pwd']
-      }
-    )
+      action :create
+      sensitive true
+      variables({
+        :user2pwd => hash['user2pwd']
+        }
+      )
    end
    ```
 
