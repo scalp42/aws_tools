@@ -105,4 +105,4 @@ After succesfully running the `uploadsecrets.rb` script, there should be 2 new f
 
 [image](https://i.imgur.com/IbNEihB.png)
 
-If you view the [`secrets.json`](http://asciinema.org/a/3shl0fmifw48hhqzyuwwp35y4) file, you should see that the file is an encrypted bunch of nonsense.
+[![asciicast](http://asciinema.org/a/3shl0fmifw48hhqzyuwwp35y4.png)](http://asciinema.org/a/3shl0fmifw48hhqzyuwwp35y4) to view a quick video displaying how secrets are uploaded to S3.
