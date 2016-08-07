@@ -4,7 +4,7 @@
 The s3encrypt cookbook provides a wrapper for building the [s3encrypt](https://github.com/DonMills/ruby-kms-s3-gem) RubyGem from source, retrieving a secrets file from S3 that was uploaded using any of the `put_file` methods of the s3encrypt gem, decrypting the secrets file, and making the secrets available to the Chef client for injection into properties files/environment variables, etc.  This is a lightweight method of secrets management that does not require creation of a dedicated secrets server.
 
 ## Why?
-Why would we do this? Why should we use a custom Ruby Gem to handle the encryption of secrets when great tools like [Hashicorp's Vault](https://www.vaultproject.io/), [Chef Vault](https://blog.chef.io/2016/01/21/chef-vault-what-is-it-and-what-can-it-do-for-you/), and others already exist on the market?  Let's see...:
+Why would we do this? Why should we use a custom Ruby Gem to handle the encryption of secrets when great tools like [Hashicorp's Vault](https://www.vaultproject.io/), [Chef Vault](https://blog.chef.io/2016/01/21/chef-vault-what-is-it-and-what-can-it-do-for-you/), and others already exist on the market?  Let's see...
 
 1. Vault and Chef Vault require extra servers to run.
   - Hashicorp Vault requires a server/client relationship, which will necessitate the creation/patching/management of your own Vault server
@@ -25,27 +25,19 @@ Why would we do this? Why should we use a custom Ruby Gem to handle the encrypti
   - S3encrypt supports multiple levels of S3 server-side encryption for security-conscious organizations (if the Hamburglar gains physical access to the disk containing your data, he will be foiled by the server-side encryption)
 
 6. Logs
-  - This cookbook utilizes the `sensitive true` property of native Chef resources to ensure that secrets are not logged by the Chef client.  This further ensures that secrets are only ever available in plain text:
-  - On the original workstation that was used to upload the secrets (system administrator)
+  - This cookbook utilizes the `sensitive true` property of native Chef resources to ensure that secrets are not logged by the Chef client either during the original secrets download or during the creation of the new checksum created when the secrets file contents are updated on the target filesystem.  This further ensures that secrets are only ever available in plain text:
+  - On the original workstation that was used to upload the secrets (system administrator, file added to .gitignore)
   - In the target properties file(s) where secrets would exist in plain text anyway
+  - In environment variables on the target server, if that meets your security standards
 
 ## Requirements
-As this cookbook facilitates the use of a gem that was solely built for AWS, this cookbook can only be used on AWS instances.  The [s3encrypt](https://github.com/DonMills/ruby-kms-s3-gem) gem should be used to first upload a JSON file containing a hash of secrets into an S3 location of your choice.
-
-### *Gems*
-The following gems are required to upload secret files to S3 using the s3encrypt gem:
-
-* [aws-sdk](https://rubygems.org/gems/aws-sdk) - Provides the API interface between your workstation and your AWS account
-* [s3encrypt](https://github.com/DonMills/ruby-kms-s3-gem) - Provides a library to interact with your [AWS KMS Customer Master Key (CMK)](https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#master_keys) and provided S3 bucket
-
-The following gems are required to download secret files from S3 using the s3encrypt gem:
-
-* [aws-sdk](https://rubygems.org/gems/aws-sdk) - Provides the API interface between your EC2 instance and your AWS account
-* [json](https://rubygems.org/gems/json) - Provides a JSON parsing method that allows the Chef client to convert a secrets JSON hash into a Ruby hash for password injection into properties files/environment variables
-* [s3encrypt](https://github.com/DonMills/ruby-kms-s3-gem) - Provides a library to interact with your [AWS KMS Customer Master Key (CMK)](https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#master_keys) and provided S3 bucket
-
 
 ### *AWS Configuration*
+
+You must have the AWS CLI installed on your workstation and have credentials configured with permissions allowing your IAM profile to:
+
+* CreateKey
+
 Your AWS profile must provide permissions for your user account to encrypt/decrypt using KMS as well as reading and writing to an S3 bucket of your choice.  An example IAM policy showing an appropriate configuration is below:
 
 ```
@@ -78,6 +70,31 @@ Your AWS profile must provide permissions for your user account to encrypt/decry
 ```
 
 Your AWS account must have an AWS KMS Customer Master Key created and your user profile should have permissions to utilize the CMK to encrypt and decrypt files.
+
+
+### *Platforms*
+- As this cookbook facilitates and depends on [the use of a gem](https://github.com/DonMills/ruby-kms-s3-gem) that was solely built for AWS, this cookbook can only be used on AWS instances. This cookbook has been tested on:
+
+- Amazon Linux
+- CentOS 6
+- CentOS 7
+- RHEL 6
+- RHEL 7
+- Ubuntu 14.04
+- Windows 2008R2
+- Windows 2012R2
+
+### *Gems*
+The following gems are required to upload secret files to S3 using the s3encrypt gem:
+
+* [aws-sdk](https://rubygems.org/gems/aws-sdk) - Provides the API interface between your workstation and your AWS account
+* [s3encrypt](https://github.com/DonMills/ruby-kms-s3-gem) - Provides a library to interact with your [AWS KMS Customer Master Key (CMK)](https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#master_keys) and provided S3 bucket
+
+The following gems are required to download secret files from S3 using the s3encrypt gem:
+
+* [aws-sdk](https://rubygems.org/gems/aws-sdk) - Provides the API interface between your EC2 instance and your AWS account
+* [json](https://rubygems.org/gems/json) - Provides a JSON parsing method that allows the Chef client to convert a secrets JSON hash into a Ruby hash for password injection into properties files/environment variables
+* [s3encrypt](https://github.com/DonMills/ruby-kms-s3-gem) - Provides a library to interact with your [AWS KMS Customer Master Key (CMK)](https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#master_keys) and provided S3 bucket
 
 
 ### *Example*
