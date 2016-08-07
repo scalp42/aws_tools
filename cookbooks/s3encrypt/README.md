@@ -34,7 +34,7 @@ Why would we do this? Why should we use a custom Ruby Gem to handle the encrypti
 
 ### *AWS Configuration*
 
-Your AWS profile must provide permissions for your user account to encrypt/decrypt using KMS as well as reading and writing to an S3 bucket of your choice.  An example IAM policy showing an appropriate configuration is below:
+Your local AWS profile must provide permissions for your user account to encrypt/decrypt using KMS as well as reading and writing to an S3 bucket of your choice.  An example IAM policy showing an appropriate configuration is below:
 
 ```
 {
@@ -66,6 +66,8 @@ Your AWS profile must provide permissions for your user account to encrypt/decry
 ```
 
 Your AWS account must have an AWS KMS Customer Master Key created and your user profile should have permissions to utilize the CMK to encrypt and decrypt files.
+
+Any servers that need to access your secret files through the Chef cookbook must have an associated IAM profile with policies granting the ability to decrypt through KMS and read from S3.
 
 
 ### *Gems*
