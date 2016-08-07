@@ -85,6 +85,7 @@ The `S3encrypt.putfile()` methods expect several arguments as follows:
 2. The path in S3 to the secrets file.  This must not begin with a forward slash and assumes that the S3 bucket is already created.  Please specify this argument by listing any sub-bucket folders followed by the secrets filename (including extension).
 3. The name of your S3 bucket.
 4. The value for your encryption context.  The encryption context is entirely arbitrary, but the `getfile()` method of the s3encrypt Gem will expect the same encryption context that you used to upload the secrets.  There is no way to retrieve the secrets unless the same encryption context is provided during the decryption call.
+5. The unique identifier for your AWS KMS master key that should be used to generate an encryption key and encrypt your specified files.
 
 _uploadsecrets.rb_
 ```
