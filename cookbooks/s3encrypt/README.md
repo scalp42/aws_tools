@@ -24,8 +24,8 @@ Why would we do this? Why should we use a custom Ruby Gem to handle the encrypti
 
 **3. S3encrypt protects against internal attacks**
   - S3encrypt is reasonably good at securing secrets even within an organization where all employees have basic access to S3
-    - An encryption context and S3 master key are required before any decryption activities can succeed
-    - Users must determine the encryption context AND have permission to the decrypt function in KMS for the master key used for original encryption of the file prior to any attempts to decrypt the encryption key.  The encrypted encryption key CANNOT be used to decrypt the secrets file without first utilizing KMS to decrypt the encryption key.  This, in essence, provides multi-layer encryption, as KMS will not decrypt the encrypted encryption key without first verifying the encryption context.  Make sense?
+  - An encryption context and S3 master key are required before any decryption activities can succeed
+  - Users must determine the encryption context AND have permission to the decrypt function in KMS for the master key used for original encryption of the file prior to any attempts to decrypt the encryption key.  The encrypted encryption key CANNOT be used to decrypt the secrets file without first utilizing KMS to decrypt the encryption key.  This, in essence, provides multi-layer encryption, as KMS will not decrypt the encrypted encryption key without first verifying the encryption context.  Make sense?
 
 **4. Secrets are never stored in GitHub**
   - Local secrets files and upload scripts should be added to .gitignore
