@@ -39,7 +39,7 @@ execute 'delete-secrets' do
 end
 
 # Use the in-memory `hash` variable to inject the secrets into an arbitrary file
-file "#{::Chef::Config['file_cache_path']}/delete_me" do
-  content "#{hash}"
-  sensitive true
-end
+#file "#{::Chef::Config['file_cache_path']}/delete_me" do
+#  content "#{hash}"
+#  sensitive true
+#end
