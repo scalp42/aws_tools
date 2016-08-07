@@ -34,10 +34,6 @@ Why would we do this? Why should we use a custom Ruby Gem to handle the encrypti
 
 ### *AWS Configuration*
 
-You must have the AWS CLI installed on your workstation and have credentials configured with permissions allowing your IAM profile to:
-
-* CreateKey
-
 Your AWS profile must provide permissions for your user account to encrypt/decrypt using KMS as well as reading and writing to an S3 bucket of your choice.  An example IAM policy showing an appropriate configuration is below:
 
 ```
