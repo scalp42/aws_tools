@@ -1,5 +1,14 @@
 # s3encrypt
 
+## Table of Contents
+1. [Description](#description)
+2. [Why?](#why)
+3. [About The Gem](#about-the-gem)
+4. [Requirements](#requirements)
+5. [Platforms](#platforms)
+6. [Downloading Secrets](#downloading-secrets)
+7. [Example](#example)
+
 ## Description
 The s3encrypt cookbook provides a wrapper for building the [s3encrypt](https://github.com/DonMills/ruby-kms-s3-gem) RubyGem from source, retrieving a secrets file from S3 that was uploaded using any of the `put_file` methods of the s3encrypt gem, decrypting the secrets file, and making the secrets available to the Chef client for injection into properties files/environment variables, etc.  In short, this is a lightweight method of secrets management that allows Chef and AWS to do the heavy lifting for you, while simultaneously not requiring creation, maintenance, or patching of a dedicated secrets server.
 
@@ -30,7 +39,7 @@ Why would we do this? Why should we use a custom Ruby Gem to handle the encrypti
   - In the target properties file(s) where secrets would exist in plain text anyway
   - In environment variables on the target server, if that meets your security standards
 
-### *About The Gem*
+## About The Gem
 
 The following methods for uploading files to S3 are provided by the [s3encrypt](https://github.com/DonMills/ruby-kms-s3-gem) gem; use any of the following methods to upload your secrets depending on the level of server-side encryption you prefer on files in your S3 buckets:
 
