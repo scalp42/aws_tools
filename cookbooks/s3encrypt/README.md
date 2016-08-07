@@ -397,5 +397,16 @@ AWS_DEFAULT_SECURITY_GROUP = sg-123jbej12
 AWS_SSH_KEY_PATH = ~/.ssh/my_private_ssh_key.pem
 ```
 
+### *Security Groups*
+The security group for any instances launched with Test Kitchen should allow inbound SSH from your public IP address.
+
+### *Subnets*
+The subnet that you launch the Test Kitchen instance in should have an Internet Gateway or a NAT instance in the routing table for traffic destined for 0.0.0.0/0 (the Internet). Without a route to the Internet, the instance will not be able to install Chef or connect to the KMS or S3 API endpoints.
+
+### *IAM Roles*
+The IAM role assigned to your user profile (local workstation, required for uploading secrets) must have a policy that allows encryption using KMS, as well as writing to the S3 bucket that you specify.
+
+The IAM role assigned to your target server environment must have a policy that allows decryption using KMS, as well as reading from the S3 bucket that you specify.
+
 # Copyright
 Apache 2.0 - Dave Tashner and Don Mills 2016
