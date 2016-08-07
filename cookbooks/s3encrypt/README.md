@@ -338,7 +338,7 @@ After a successful upload, your S3 bucket should have the following items:
          type="javax.sql.DataSource"
          driverClassName="oracle.jdbc.OracleDriver"
          url="jdbc:oracle:thin:@hostname:port:sid"
-         username="user1"
+         username="user2"
          password=<%= @user2pwd %>
          connectionProperties="SetBigStringTryClob=true"
 		 accessToUnderlyingConnectionAllowed="true"
@@ -354,7 +354,7 @@ After a successful upload, your S3 bucket should have the following items:
     action :create
     sensitive true
     variables({
-      :user1pwd => hash['user2pwd']
+      :user2pwd => hash['user2pwd']
       }
     )
    end
