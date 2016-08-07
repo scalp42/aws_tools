@@ -132,7 +132,7 @@ The following gems are required to download secret files from S3 using the s3enc
 Git (for building s3encrypt from source) and the chef-client should be available on the target server or workstation where the secrets will be utilized.  This cookbook was tested on chef-client 12.12, but is known to work on chef-client versions as old as 12.3.
 
 ### *Helper Script*
-It is easiest to create a helper script to call the s3encrypt gem. Your AWS credentials should be configured on your local workstation prior to running this script.
+In the absence of a local CLI tool (coming soon), it is easiest to create a helper script to call the s3encrypt gem. Your AWS credentials should be configured on your local workstation prior to running this script.
 
 _uploadsecrets.rb_
 ```
