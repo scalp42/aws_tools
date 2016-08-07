@@ -85,8 +85,11 @@ Your local AWS profile must provide permissions for your user account to encrypt
   "Statement": [
     {
       "Effect": "Allow",
-      "Action": "s3:*",
-      "Resource": "*"
+      "Action": [
+        "s3:GetObject"
+        "s3:PutObject",
+      ],
+      "Resource": ["arn:aws:s3:::dtashner/*"]
     },
     {
       "Effect": "Allow",
