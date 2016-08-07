@@ -30,10 +30,13 @@ Why would we do this? Why should we use a custom Ruby Gem to handle the encrypti
 **4. Secrets are never stored in GitHub**
   - Local secrets files and upload scripts should be added to .gitignore
 
-**5. Server-side encryption**
+**5. Secrets are never stored on Chef Server**
+  - If you use Chef Server, this method avoids storing passwords as Chef attributes, which will ultimately end up visible on the Chef server in the node object information for each node.  Instead, this method uses in-memory Ruby variables that are destroyed at the termination of each chef-client run.
+
+**6. Server-side encryption**
   - S3encrypt supports multiple levels of S3 server-side encryption for security-conscious organizations (if the Hamburglar gains physical access to the Amazon data center containing your data, he will be foiled by server-side encryption)
 
-**6. Logs**
+**7. Logs**
   - This cookbook utilizes the `sensitive true` property of native Chef resources to ensure that secrets are not logged by the Chef client either during the original secrets download or during any write operations to the secrets file when Chef downloads and creates the file.  This further ensures that secrets are only ever available in plain text:
   - On the original workstation that was used to upload the secrets (a system administrator may control this workflow; file added to .gitignore)
   - In the target properties file(s) where secrets would exist in plain text anyway
