@@ -141,6 +141,7 @@ After a successful upload, your S3 bucket should have the following items:
 #### *Default Attributes*
 This Chef cookbook provides a few default attributes to assit the decryption and utilization of secrets files:
 
+_~/attributes/default.rb_
 * `default['s3encrypt']['aws_region']` = 'us-east-1'
 * `default['s3encrypt']['encryption_context']` = "calvin_and_hobbes"
 * `default['s3encrypt']['local_secret_path']` = "#{::Chef::Config['file_cache_path']}/secrets.json"
@@ -153,7 +154,7 @@ Currently, the s3encrypt gem is not available on [RubyGems](https://rubygems.org
 #### *default Recipe*
 The default recipe of the s3encrypt cookbook guarantees that necessary libraries (aws-sdk, json, s3encrypt) are available to the system, after which the `getfile()` method of the s3encrypt gem is utilized to download a secrets JSON file during the compile phase of the Chef client run.  The JSON file is then parsed by the Ruby interpreter and converted to a Ruby hash.  Once the secrets file is available to the Chef client as a Ruby hash, the key/value pairs of the JSON file are available to the Chef client.  Chef is then able to inject the values of the secrets hash into properties files or inject the secrets as environment variables, depending on the requirements of the client.
 
-
+_~/recipes/default.rb_
 ```
 ENV['AWS_REGION'] = node['s3encrypt']['aws_region']
 
