@@ -18,7 +18,8 @@ Why would we do this? Why should we use a custom Ruby Gem to handle the encrypti
     - An encryption context and S3 master key are required before any decryption activities can succeed
     - Users must determine the encryption context AND KMS master key used for original encryption prior to any attempts to decrypt the encryption key.  The encrypted encryption key CANNOT be used to decrypt the secrets file without first utilizing KMS to decrypt the encryption key.  This, in essence, provides multi-layer encryption.
 
-4. Secrets are never stored in GitHub (local secrets files should be added to .gitignore)
+4. Secrets are never stored in GitHub
+  - Local secrets files should be added to .gitignore
 
 5. Server-side encryption
   - S3encrypt supports multiple levels of S3 server-side encryption for security-conscious organizations (if the Hamburglar gains physical access to the disk containing your data, he will be foiled by the server-side encryption)
