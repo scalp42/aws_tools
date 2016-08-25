@@ -410,5 +410,5 @@ The IAM role assigned to your user profile (local workstation, required for uplo
 
 The IAM role assigned to your target server environment must have a policy that allows decryption using KMS, as well as reading from the S3 bucket that you specify.
 
-# Copyright
-Apache 2.0 - Dave Tashner and Don Mills 2016
+# License
+MIT - Dave Tashner and Don Mills 2016
