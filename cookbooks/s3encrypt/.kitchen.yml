@@ -27,5 +27,9 @@ platforms:
 suites:
   - name: default
     run_list:
-      - recipe[s3encrypt::default]
+      - recipe[s3encrypt::test1]
     attributes:
+      s3encrypt:
+        encryption_context: "SingleStone"
+        s3_bucket: "singlestone"
+        s3_secret_path: "temp/secrets.json"
